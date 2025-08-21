@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL Certificate Checker</title>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #F44336;
+            --background-color: #f7f9fc;
+            --card-background: #ffffff;
+            --text-color: #333;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #urlInput {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        #urlInput:focus {
+            border-color: var(--primary-color);
+        }
+
+        #checkButton {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-weight: 600;
+        }
+
+        #checkButton:hover {
+            background-color: #43a047;
+            transform: translateY(-2px);
+        }
+
+        .status {
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .status.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status.safe {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--primary-color);
+        }
+
+        .status.dangerous {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .status-icon {
+            font-size: 1.2em;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+            text-align: left;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .results-section.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result-item {
+            background-color: #fafafa;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+
+        .result-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1em;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .result-item p {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 650px) {
+            .input-group {
+                flex-direction: column;
+            }
+            #checkButton {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>SSL Certificate-ների ստուգում</h1>
+        <p>Մուտքագրեք կայքի URL հասցեն՝ SSL տվյալները ստուգելու համար։</p>
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="Օրինակ՝ example.com">
+            <button id="checkButton">Ստուգել</button>
+        </div>
+        <div id="statusIndicator" class="status"></div>
+        <div id="loadingIndicator" class="loading-spinner"></div>
+        <div id="resultsSection" class="results-section">
+            <div class="result-item">
+                <h3>Գրանցման ամսաթիվ</h3>
+                <p id="issueDate">Ստուգում...</p>
+            </div>
+            <div class="result-item">
+                <h3>Վերջնաժամկետ ամսաթիվ</h3>
+                <p id="expiryDate">Ստուգում...</p>
+            </div>
+            <div class="result-item">
+                <h3>Ակտիվ օրերի քանակ (մինչ վերջնաժամկետի ավարտը)</h3>
+                <p id="daysRemaining">Ստուգում...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ծրագրի հիմնական JavaScript ֆունկցիոնալությունը
+        document.getElementById('checkButton').addEventListener('click', () => {
+            const urlInput = document.getElementById('urlInput');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsSection = document.getElementById('resultsSection');
+            const issueDateEl = document.getElementById('issueDate');
+            const expiryDateEl = document.getElementById('expiryDate');
+            const daysRemainingEl = document.getElementById('daysRemaining');
+            
+            let url = urlInput.value.trim();
+
+            // Ստուգում է, արդյոք URL-ը դատարկ է
+            if (url === '') {
+                // Ցույց է տալիս սխալի հաղորդագրություն կամ պարզապես դադարեցնում է գործողությունը
+                statusIndicator.textContent = "Խնդրում ենք մուտքագրել URL։";
+                statusIndicator.className = "status dangerous visible";
+                return;
+            }
+
+            // Հեռացնում է URL-ի սկզբում առկա http:// կամ https://
+            let cleanedUrl = url.replace(/^(https?:\/\/)/, '');
+            
+            // Ստուգում է, թե արդյոք URL-ը անվտանգ է (https) թե վտանգավոր (http)
+            const protocol = url.startsWith('https://') ? 'https' : 'http';
+            if (protocol === 'https') {
+                statusIndicator.className = "status safe visible";
+                statusIndicator.innerHTML = '<span class="status-icon">✅</span> Անվտանգ է';
+            } else {
+                statusIndicator.className = "status dangerous visible";
+                statusIndicator.innerHTML = '<span class="status-icon">⚠️</span> Վտանգավոր է';
+            }
+            
+            // Թաքցնում է նախորդ արդյունքները և ցուցադրում է բեռնման ինդիկատորը
+            resultsSection.classList.remove('visible');
+            loadingIndicator.style.display = 'block';
+
+            // Իրական SSL տվյալների ստացումը հնարավոր չէ client-side JavaScript-ով,
+            // ուստի մենք նմանակում ենք այս գործընթացը։
+            // Այս հատվածը կապահովի UI-ի ճիշտ աշխատանքը։
+            setTimeout(() => {
+                loadingIndicator.style.display = 'none';
+
+                // Նմանակված տվյալներ (այս տվյալները կգային հետին ծրագրից)
+                const mockIssueDate = new Date('2024-01-15T00:00:00Z');
+                const mockExpiryDate = new Date('2025-01-15T23:59:59Z');
+                
+                const now = new Date();
+                const diffTime = mockExpiryDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Ֆորմատավորում է ամսաթվերը
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedIssueDate = mockIssueDate.toLocaleDateString('hy-AM', options);
+                const formattedExpiryDate = mockExpiryDate.toLocaleDateString('hy-AM', options);
+                
+                // Ցուցադրում է նմանակված արդյունքները UI-ում
+                issueDateEl.textContent = formattedIssueDate;
+                expiryDateEl.textContent = formattedExpiryDate;
+                daysRemainingEl.textContent = `${diffDays} օր`;
+
+                resultsSection.classList.add('visible');
+            }, 2000); // Նմանակում է 2 վայրկյանի բեռնման ժամանակ
+        });
+
+    </script>
+</body>
+</html>
